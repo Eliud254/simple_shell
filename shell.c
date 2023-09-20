@@ -1,25 +1,54 @@
 #include "shell.h"
+
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if input is from a term
- *inal
- * None
- * Return: None
+ * display_prompt - Displays the shell prompt "Shelly> " if the input is from a terminal.
  */
 void display_prompt(void)
 {
 	if (isatty(STDIN_FILENO))
 	{
-		printf("Shelly> ");
+		write(STDOUT_FILENO, "Shelly> ", 8);
 		fflush(stdout);
 	}
 }
 
 /**
- * parse_input - Parse input into individual arguments.
- * @input: Input string to be parsed.
- * @args: Array to store parsed arguments.
+ * set_env_variable - Set or modify an environment variable.
+ * @variable: The name of the environment variable.
+ * @value: The value to set for the environment variable.
  *
- * Return: Number of arguments parsed.
+ * Return: 0 on success, -1 on failure.
+ */
+int set_env_variable(const char *variable, const char *value)
+{
+	if (setenv(variable, value, 1) == -1)
+	{
+		perror("setenv error");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * unset_env_variable - Unset an environment variable.
+ * @variable: The name of the environment variable to unset.
+ *
+ * Return: 0 on success, -1 on failure.
+ */
+int unset_env_variable(const char *variable)
+{
+	if (unsetenv(variable) == -1)
+	{
+		perror("unsetenv error");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * main - Entry point for the custom shell.
+ *
+ * Return: Always 0.
  */
 int main(void)
 {
@@ -37,33 +66,29 @@ int main(void)
 
 		display_prompt();
 
-		/* Read user input using getline */
 		bytes_read = getline(&command, &command_size, stdin);
 
 		if (bytes_read == -1)
 		{
 			if (feof(stdin))
 			{
-				/* Handle end of file (Ctrl+D) */
 				break;
 			}
 			else
 			{
 				perror("Input error");
-				clearerr(stdin); /* Clear the error state */
+				clearerr(stdin);
 
 				free(command);
 
-				continue; /* Continue to the next iteration */
+				continue;
 			}
 		}
-		/* Remove the newline character from the command */
 		if (command[bytes_read - 1] == '\n')
 		{
 			command[bytes_read - 1] = '\0';
 		}
 
-		/* Tokenize the command */
 		token = strtok(command, " ");
 
 		while (token != NULL && arg_count < MAX_ARGS - 1)
@@ -73,7 +98,6 @@ int main(void)
 		}
 		args[arg_count] = NULL;
 
-		/* Check for the built-in "exit" command */
 		if (arg_count > 0 && strcmp(args[0], "exit") == 0)
 		{
 			if (arg_count > 1)
@@ -86,47 +110,55 @@ int main(void)
 				exit(0);
 			}
 		}
-
-		/* Fork a child process */
-		child_pid = fork();
-
-		if (child_pid < 0)
+		else if (arg_count >= 3 && strcmp(args[0], "setenv") == 0)
 		{
-			/* Error forking */
-			perror("Fork error");
-		}
-		else if (child_pid == 0)
-		{
-			/* Child process */
-			/* Execute the command using execvp */
-			if (execvp(args[0], args) == -1)
+			if (set_env_variable(args[1], args[2]) == -1)
 			{
-				perror("Command execution error");
-				exit(EXIT_FAILURE);
+				fprintf(stderr, "Failed to set environment variable\n");
+			}
+		}
+		else if (arg_count >= 2 && strcmp(args[0], "unsetenv") == 0)
+		{
+			if (unset_env_variable(args[1]) == -1)
+			{
+				fprintf(stderr, "Failed to unset environment variable\n");
 			}
 		}
 		else
 		{
-			/* Parent process */
-			/* Wait for the child process to complete */
-			int child_status;
-			waitpid(child_pid, &child_status, 0);
+			child_pid = fork();
 
-			/* Check if the child process exited normally or due to a signal */
-			if (WIFEXITED(child_status))
+			if (child_pid < 0)
 			{
-				int exit_status = WEXITSTATUS(child_status);
-				(void)exit_status;
+				perror("Fork error");
 			}
-			else if (WIFSIGNALED(child_status))
+			else if (child_pid == 0)
 			{
-				int terminating_signal = WTERMSIG(child_status);
-				(void)terminating_signal;
+				if (execvp(args[0], args) == -1)
+				{
+					perror("Command execution error");
+					exit(EXIT_FAILURE);
+				}
+			}
+			else
+			{
+				int child_status;
+				waitpid(child_pid, &child_status, 0);
+
+				if (WIFEXITED(child_status))
+				{
+					int exit_status = WEXITSTATUS(child_status);
+					(void)exit_status;
+				}
+				else if (WIFSIGNALED(child_status))
+				{
+					int terminating_signal = WTERMSIG(child_status);
+					(void)terminating_signal;
+				}
 			}
 		}
 	}
 
-	/* Free the allocated memory for the command */
 	free(command);
 
 	return (0);

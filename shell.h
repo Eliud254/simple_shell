@@ -8,9 +8,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #define MAX_COMMAND_LENGTH 1024
 #define MAX_ARGS 128
-
+#define MAX_ENV_VAR_SIZE 256
 
 #endif
