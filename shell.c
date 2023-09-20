@@ -1,13 +1,10 @@
 #include "shell.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-#define MAX_INPUT_SIZE 1024
-
+/**
+ * displayPrompt - Displays the shell prompt "Shelly> " if input is from a term
+ *inal
+ * None
+ * Return: None
+ */
 void display_prompt(void)
 {
 	if (isatty(STDIN_FILENO))
@@ -17,6 +14,13 @@ void display_prompt(void)
 	}
 }
 
+/**
+ * parse_input - Parse input into individual arguments.
+ * @input: Input string to be parsed.
+ * @args: Array to store parsed arguments.
+ *
+ * Return: Number of arguments parsed.
+ */
 int main(void)
 {
 	char *command = NULL;
@@ -79,7 +83,7 @@ int main(void)
 			}
 			else
 			{
-				exit(0); // Exit with status 0 by default
+				exit(0);
 			}
 		}
 
@@ -95,11 +99,11 @@ int main(void)
 		{
 			/* Child process */
 			/* Execute the command using execvp */
-			execvp(args[0], args);
-
-			/* If execvp returns, an error occurred */
-			fprintf(stderr, "Command execution error: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
+			if (execvp(args[0], args) == -1)
+			{
+				perror("Command execution error");
+				exit(EXIT_FAILURE);
+			}
 		}
 		else
 		{
