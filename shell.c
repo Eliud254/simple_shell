@@ -46,6 +46,38 @@ int unset_env_variable(const char *variable)
 }
 
 /**
+ * change_directory - Change the current directory and update the PWD environment variable.
+ * @directory: The directory path to change to.
+ *
+ * Return: 0 on success, -1 on failure.
+ */
+
+int change_directory(const char *directory)
+{
+	char *current_directory = getcwd(NULL, 0);
+	if (current_directory == NULL)
+	{
+		perror("getcwd error");
+		return (-1);
+	}
+
+	if (chdir(directory) == -1)
+	{
+		perror("chdir error");
+		free(current_directory);
+		return (-1);
+	}
+
+	if (set_env_variable("PWD", directory) == -1)
+	{
+		fprintf(stderr, "Failed to update PWD environment variable\n");
+	}
+
+	free(current_directory);
+	return (0);
+}
+
+/**
  * main - Entry point for the custom shell.
  *
  * Return: Always 0.
@@ -124,6 +156,30 @@ int main(void)
 				fprintf(stderr, "Failed to unset environment variable\n");
 			}
 		}
+		else if (strcmp(args[0], "cd") == 0)
+		{
+			/* Handle the "cd" command */
+			if (arg_count == 1 || (arg_count == 2 && strcmp(args[1], "-") == 0))
+			{
+				/* Change to the home directory or previous directory */
+				if (change_directory(getenv("HOME")) == -1)
+				{
+					fprintf(stderr, "Failed to change directory\n");
+				}
+			}
+			else if (arg_count == 2)
+			{
+				/* Change to the specified directory */
+				if (change_directory(args[1]) == -1)
+				{
+					fprintf(stderr, "Failed to change directory\n");
+				}
+			}
+			else
+			{
+				fprintf(stderr, "Usage: cd [DIRECTORY]\n");
+			}
+		}
 		else
 		{
 			child_pid = fork();
@@ -161,5 +217,5 @@ int main(void)
 
 	free(command);
 
-	return (0);
+	return 0;
 }
