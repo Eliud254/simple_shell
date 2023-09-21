@@ -97,6 +97,7 @@ int main(void)
 		/* Handle built-in commands */
 		if (strcmp(args[0], "exit") == 0)
 		{
+			free(command);
 			exit(0);
 		}
 		else if (strcmp(args[0], "cd") == 0)
