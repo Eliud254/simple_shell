@@ -128,6 +128,7 @@ int main(void)
 
 		/* Check if the PATH environment variable is empty */
 		path = getenv("PATH");
+
 		if (path == NULL || strlen(path) == 0)
 		{
 			/* Check if the command exists in the current directory */
