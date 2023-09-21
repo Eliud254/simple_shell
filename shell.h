@@ -55,4 +55,6 @@ void print_aliases(void);
 
 void define_alias(const char *alias);
 
+void execute_command(char *command);
+
 #endif
