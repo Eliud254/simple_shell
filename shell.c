@@ -1,8 +1,7 @@
 #include "shell.h"
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if input is from a term
- *inal
+ * displayPrompt - Displays the shell prompt "Shelly> " if input is from a terminal.
  * None
  * Return: None
  */
@@ -22,90 +21,141 @@ void displayPrompt(void)
  *
  * Return: Number of arguments parsed.
  */
- int main(void)
- {
-    char *command = NULL;
-    size_t commandSize = 0;
+int parse_input(char *input, char **args)
+{
+	int argCount = 0;
+	char *token;
 
-    while (1)
-    {
-        ssize_t bytesRead;
-        pid_t childPid;
+	/* Tokenize the command */
+	token = strtok(input, " ");
 
-        int argCount = 0;
-        char *args[MAX_ARGS];
-        char *token;
-
-        displayPrompt();
-
-        /* Read user input using getline */
-        bytesRead = getline(&command, &commandSize, stdin);
-
-	if (bytesRead == -1)
+	while (token != NULL && argCount < MAX_ARGS - 1)
 	{
-		if (feof(stdin))
+		args[argCount++] = token;
+		token = strtok(NULL, " ");
+	}
+	args[argCount] = NULL;
+
+	return argCount;
+}
+
+int main(void)
+{
+	char *command = NULL;
+	size_t commandSize = 0;
+
+	while (1)
+	{
+		ssize_t bytesRead;
+		pid_t childPid;
+		char *args[MAX_ARGS];
+		int argCount;
+
+		displayPrompt();
+
+		/* Read user input using getline */
+		bytesRead = getline(&command, &commandSize, stdin);
+
+		if (bytesRead == -1)
 		{
-			/* Handle end of file (Ctrl+D) */
-			break;
+			if (feof(stdin))
+			{
+				/* Handle end of file (Ctrl+D) */
+				break;
+			}
+			else
+			{
+				perror("Input error");
+				clearerr(stdin); /* Clear the error state */
+
+				free(command);
+
+				continue; /* Continue to the next iteration */
+			}
+		}
+
+		/* Remove the newline character from the command */
+		if (command[bytesRead - 1] == '\n')
+		{
+			command[bytesRead - 1] = '\0';
+		}
+
+		/* Check for comments and skip if present */
+		if (command[0] == '#')
+		{
+			continue;
+		}
+
+		/* Parse the command into arguments */
+		argCount = parse_input(command, args);
+
+		if (argCount == 0)
+		{
+			continue;
+		}
+
+		/* Handle built-in commands */
+		if (strcmp(args[0], "exit") == 0)
+		{
+			exit(0);
+		}
+		else if (strcmp(args[0], "cd") == 0)
+		{
+			if (argCount < 2)
+			{
+				fprintf(stderr, "Usage: cd <directory>\n");
+			}
+			else
+			{
+				if (chdir(args[1]) != 0)
+				{
+					perror("cd error");
+				}
+			}
+			continue;
+		}
+
+		/* Fork a child process */
+		childPid = fork();
+
+		if (childPid < 0)
+		{
+			/* Error forking */
+			perror("Fork error");
+		}
+		else if (childPid == 0)
+		{
+			/* Child process */
+			/* Execute the command using execvp */
+			execvp(args[0], args);
+
+			/* If execvp returns, an error occurred */
+			perror("Command execution error");
+			exit(EXIT_FAILURE);
 		}
 		else
 		{
-			perror("Input error");
-			clearerr(stdin);/* Clear the error state */
-			
-			free(command);
+			/* Parent process */
+			/* Wait for the child process to complete */
+			int childStatus;
+			waitpid(childPid, &childStatus, 0);
 
-			continue;/* Continue to the next iteration */
+			/* Check if the child process exited normally or due to a signal */
+			if (WIFEXITED(childStatus))
+			{
+				int exitStatus = WEXITSTATUS(childStatus);
+				(void)exitStatus;
+			}
+			else if (WIFSIGNALED(childStatus))
+			{
+				int terminatingSignal = WTERMSIG(childStatus);
+				(void)terminatingSignal;
+			}
 		}
 	}
-        /* Remove the newline character from the command */
-        if (command[bytesRead - 1] == '\n') {
-            command[bytesRead - 1] = '\0';
-        }
 
-        /* Tokenize the command */
-        token = strtok(command, " ");
+	/* Free the allocated memory for the command */
+	free(command);
 
-        while (token != NULL && argCount < MAX_ARGS - 1) {
-            args[argCount++] = token;
-            token = strtok(NULL, " ");
-        }
-        args[argCount] = NULL;
-
-        /* Fork a child process */
-        childPid = fork();
-
-        if (childPid < 0) {
-            /* Error forking */
-            perror("Fork error");
-        } else if (childPid == 0) {
-            /* Child process */
-            /* Execute the command using execvp */
-            execvp(args[0], args);
-
-            /* If execvp returns, an error occurred */
-            perror("Command execution error");
-            exit(EXIT_FAILURE);
-        } else {
-            /* Parent process */
-            /* Wait for the child process to complete */
-            int childStatus;
-            waitpid(childPid, &childStatus, 0);
-
-            /* Check if the child process exited normally or due to a signal */
-            if (WIFEXITED(childStatus)) {
-                int exitStatus = WEXITSTATUS(childStatus);
-                (void)exitStatus;
-            } else if (WIFSIGNALED(childStatus))
-            {
-                int terminatingSignal = WTERMSIG(childStatus);
-                (void)terminatingSignal;
-            }
-        }
-    }
-
-    /* Free the allocated memory for the command */
-    free(command);
-
-    return (0);
+	return (0);
 }
