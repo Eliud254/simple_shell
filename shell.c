@@ -98,6 +98,7 @@ int main(void)
 		if (strcmp(args[0], "exit") == 0)
 		{
 			free(command);
+
 			if (argCount > 1)
 			{
 				int exitStatus = atoi(args[1]);
@@ -105,7 +106,7 @@ int main(void)
 			}
 			else
 			{
-				exit(0);
+				exit(EXIT_SUCCESS);
 			}
 		}
 		else if (strcmp(args[0], "cd") == 0)
