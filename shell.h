@@ -51,4 +51,8 @@ int change_directory(const char *directory);
  */
 char *replace_variables(char *command);
 
+void print_aliases(void);
+
+void define_alias(const char *alias);
+
 #endif
