@@ -106,7 +106,7 @@ int main(void)
 			}
 			else
 			{
-				exit(EXIT_SUCCESS);
+				exit(2);
 			}
 		}
 		else if (strcmp(args[0], "cd") == 0)
