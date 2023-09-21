@@ -3,3 +3,4 @@ allowed_functions
 betty
 hsh
 runchecker.bash
+*.bash

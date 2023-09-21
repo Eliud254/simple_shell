@@ -130,8 +130,17 @@ int main(void)
 		path = getenv("PATH");
 		if (path == NULL || strlen(path) == 0)
 		{
-			fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
-			continue;
+			/* Check if the command exists in the current directory */
+			if (access(args[0], X_OK) == 0)
+			{
+				/* Execute the command from the current directory */
+				execvp(args[0], args);
+			}
+			else
+			{
+				fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
+				exit(127);
+			}
 		}
 
 		/* Fork a child process */
