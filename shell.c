@@ -51,6 +51,7 @@ int main(void)
 		char *args[MAX_ARGS];
 		int argCount;
 		char *path;
+		char *path1;
 
 		displayPrompt();
 
@@ -102,7 +103,7 @@ int main(void)
 
 			if (argCount > 1)
 			{
-				int exitStatus = 2;
+				int exitStatus = atoi(args[1]);
 				exit(exitStatus);
 			}
 			else
@@ -128,8 +129,9 @@ int main(void)
 
 		/* Check if the PATH environment variable is empty */
 		path = getenv("PATH");
+		path1 = getenv("PATH1");
 
-		if (path == NULL || strlen(path) == 0)
+		if ((path == NULL || strlen(path) == 0) && (path1 == NULL || strlen(path1) == 0))
 		{
 			/* Check if the command exists in the current directory */
 			if (access(args[0], X_OK) == 0)
@@ -143,42 +145,78 @@ int main(void)
 				exit(127);
 			}
 		}
-
-		/* Fork a child process */
-		childPid = fork();
-
-		if (childPid < 0)
-		{
-			/* Error forking */
-			perror("Fork error");
-		}
-		else if (childPid == 0)
-		{
-			/* Child process */
-			/* Execute the command using execvp */
-			execvp(args[0], args);
-
-			/* If execvp returns, an error occurred */
-			perror("Command execution error");
-			exit(EXIT_FAILURE);
-		}
 		else
 		{
-			/* Parent process */
-			/* Wait for the child process to complete */
-			int childStatus;
-			waitpid(childPid, &childStatus, 0);
+			/* Combine PATH and PATH1 for searching */
+			char *combinedPath = NULL;
 
-			/* Check if the child process exited normally or due to a signal */
-			if (WIFEXITED(childStatus))
+			if (path != NULL && path1 != NULL)
 			{
-				int exitStatus = WEXITSTATUS(childStatus);
-				(void)exitStatus;
+				combinedPath = malloc(strlen(path) + strlen(path1) + 2);
+				if (combinedPath != NULL)
+				{
+					strcpy(combinedPath, path);
+					strcat(combinedPath, ":");
+					strcat(combinedPath, path1);
+				}
 			}
-			else if (WIFSIGNALED(childStatus))
+			else if (path != NULL)
 			{
-				int terminatingSignal = WTERMSIG(childStatus);
-				(void)terminatingSignal;
+				combinedPath = strdup(path);
+			}
+			else if (path1 != NULL)
+			{
+				combinedPath = strdup(path1);
+			}
+
+			if (combinedPath != NULL)
+			{
+				/* Set the combined path as the new PATH */
+				setenv("PATH", combinedPath, 1);
+				free(combinedPath);
+
+				/* Fork a child process using the updated PATH */
+				childPid = fork();
+
+				if (childPid < 0)
+				{
+					/* Error forking */
+					perror("Fork error");
+				}
+				else if (childPid == 0)
+				{
+					/* Child process */
+					/* Execute the command using execvp */
+					execvp(args[0], args);
+
+					/* If execvp returns, an error occurred */
+					fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
+					exit(127);
+				}
+				else
+				{
+					/* Parent process */
+					/* Wait for the child process to complete */
+					int childStatus;
+					waitpid(childPid, &childStatus, 0);
+
+					/* Check if the child process exited normally or due to a signal */
+					if (WIFEXITED(childStatus))
+					{
+						int exitStatus = WEXITSTATUS(childStatus);
+						(void)exitStatus;
+					}
+					else if (WIFSIGNALED(childStatus))
+					{
+						int terminatingSignal = WTERMSIG(childStatus);
+						(void)terminatingSignal;
+					}
+				}
+			}
+			else
+			{
+				fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
+				exit(127);
 			}
 		}
 	}
