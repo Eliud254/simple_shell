@@ -98,7 +98,15 @@ int main(void)
 		if (strcmp(args[0], "exit") == 0)
 		{
 			free(command);
-			exit(0);
+			if (argCount > 1)
+			{
+				int exitStatus = atoi(args[1]);
+				exit(exitStatus);
+			}
+			else
+			{
+				exit(0);
+			}
 		}
 		else if (strcmp(args[0], "cd") == 0)
 		{
