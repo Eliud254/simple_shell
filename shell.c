@@ -50,6 +50,7 @@ int main(void)
 		pid_t childPid;
 		char *args[MAX_ARGS];
 		int argCount;
+		char *path;
 
 		displayPrompt();
 
@@ -101,12 +102,12 @@ int main(void)
 
 			if (argCount > 1)
 			{
-				int exitStatus = atoi(args[1]);
+				int exitStatus = 2;
 				exit(exitStatus);
 			}
 			else
 			{
-				exit(2);
+				exit(EXIT_SUCCESS);
 			}
 		}
 		else if (strcmp(args[0], "cd") == 0)
@@ -122,6 +123,14 @@ int main(void)
 					perror("cd error");
 				}
 			}
+			continue;
+		}
+
+		/* Check if the PATH environment variable is empty */
+		path = getenv("PATH");
+		if (path == NULL || strlen(path) == 0)
+		{
+			fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
 			continue;
 		}
 
