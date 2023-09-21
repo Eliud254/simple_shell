@@ -24,9 +24,9 @@ int set_env_variable(const char *variable, const char *value)
 	if (setenv(variable, value, 1) == -1)
 	{
 		perror("setenv error");
-		return -1;
+		return (-1);
 	}
-	return 0;
+	return (0);
 }
 
 /**
@@ -40,9 +40,9 @@ int unset_env_variable(const char *variable)
 	if (unsetenv(variable) == -1)
 	{
 		perror("unsetenv error");
-		return -1;
+		return (-1);
 	}
-	return 0;
+	return (0);
 }
 
 /**
@@ -78,111 +78,91 @@ int change_directory(const char *directory)
 }
 
 /**
+ * replace_variables - Replace special variables like $? and $$ in a command.
+ * @command: The command string to replace variables in.
+ *
+ * Return: The command string with variables replaced.
+ */
+char *replace_variables(char *command)
+{
+	char *result = malloc(MAX_INPUT_SIZE);
+	char *exit_status_str;
+	char shell_pid_str[16];
+	char *pos;
+
+	if (result == NULL)
+	{
+		perror("Memory allocation error");
+		exit(EXIT_FAILURE);
+	}
+	strcpy(result, command);
+
+	/* Replace $? with the exit status of the last command */
+	exit_status_str = getenv("?"); /* Get the exit status as a string */
+	if (exit_status_str != NULL)
+	{
+		char *pos;
+		pos = strstr(result, "$?");
+
+		while (pos != NULL)
+		{
+			/* Replace $? */
+			strcpy(pos, exit_status_str);
+			pos = strstr(result, "$?");
+		}
+	}
+
+	/* Replace $$ with the PID of the shell */
+	snprintf(shell_pid_str, sizeof(shell_pid_str), "%d", getpid());
+	pos = strstr(result, "$$");
+	while (pos != NULL)
+	{
+		/* Replace $$ */
+		strcpy(pos, shell_pid_str);
+		pos = strstr(result, "$$");
+	}
+
+	return (result);
+}
+
+/**
  * main - Entry point for the custom shell.
  *
  * Return: Always 0.
  */
-int main(void)
+int main(int argc, char *argv[])
 {
 	char *command = NULL;
 	size_t command_size = 0;
 
-	while (1)
+	if (argc > 1)
 	{
-		ssize_t bytes_read;
-		pid_t child_pid;
-
-		int arg_count = 0;
-		char *args[MAX_ARGS];
-		char *token;
-
-		display_prompt();
-
-		bytes_read = getline(&command, &command_size, stdin);
-
-		if (bytes_read == -1)
+		FILE *file = fopen(argv[1], "r");
+		if (file == NULL)
 		{
-			if (feof(stdin))
-			{
-				break;
-			}
-			else
-			{
-				perror("Input error");
-				clearerr(stdin);
-
-				free(command);
-
-				continue;
-			}
-		}
-		if (command[bytes_read - 1] == '\n')
-		{
-			command[bytes_read - 1] = '\0';
+			perror("File open error");
+			exit(EXIT_FAILURE);
 		}
 
-		token = strtok(command, " ");
+		while (getline(&command, &command_size, file) != -1)
+		{
+			int arg_count = 0;
+			char *args[MAX_ARGS];
+			char *token;
+			pid_t child_pid = fork();
 
-		while (token != NULL && arg_count < MAX_ARGS - 1)
-		{
-			args[arg_count++] = token;
-			token = strtok(NULL, " ");
-		}
-		args[arg_count] = NULL;
+			command[strcspn(command, "\n")] = '\0';
 
-		if (arg_count > 0 && strcmp(args[0], "exit") == 0)
-		{
-			if (arg_count > 1)
+			command = replace_variables(command);
+
+			token = strtok(command, " ");
+
+			while (token != NULL && arg_count < MAX_ARGS - 1)
 			{
-				int exit_status = atoi(args[1]);
-				exit(exit_status);
+				args[arg_count++] = token;
+				token = strtok(NULL, " ");
 			}
-			else
-			{
-				exit(0);
-			}
-		}
-		else if (arg_count >= 3 && strcmp(args[0], "setenv") == 0)
-		{
-			if (set_env_variable(args[1], args[2]) == -1)
-			{
-				fprintf(stderr, "Failed to set environment variable\n");
-			}
-		}
-		else if (arg_count >= 2 && strcmp(args[0], "unsetenv") == 0)
-		{
-			if (unset_env_variable(args[1]) == -1)
-			{
-				fprintf(stderr, "Failed to unset environment variable\n");
-			}
-		}
-		else if (strcmp(args[0], "cd") == 0)
-		{
-			/* Handle the "cd" command */
-			if (arg_count == 1 || (arg_count == 2 && strcmp(args[1], "-") == 0))
-			{
-				/* Change to the home directory or previous directory */
-				if (change_directory(getenv("HOME")) == -1)
-				{
-					fprintf(stderr, "Failed to change directory\n");
-				}
-			}
-			else if (arg_count == 2)
-			{
-				/* Change to the specified directory */
-				if (change_directory(args[1]) == -1)
-				{
-					fprintf(stderr, "Failed to change directory\n");
-				}
-			}
-			else
-			{
-				fprintf(stderr, "Usage: cd [DIRECTORY]\n");
-			}
-		}
-		else
-		{
-			child_pid = fork();
+			args[arg_count] = NULL;
 
 			if (child_pid < 0)
 			{
@@ -213,9 +193,145 @@ int main(void)
 				}
 			}
 		}
+
+		fclose(file);
+	}
+	else
+	{
+		while (1)
+		{
+			ssize_t bytes_read;
+			pid_t child_pid;
+
+			int arg_count = 0;
+			char *args[MAX_ARGS];
+			char *token;
+
+			display_prompt();
+
+			bytes_read = getline(&command, &command_size, stdin);
+
+			if (bytes_read == -1)
+			{
+				if (feof(stdin))
+				{
+					break;
+				}
+				else
+				{
+					perror("Input error");
+					clearerr(stdin);
+
+					free(command);
+
+					continue;
+				}
+			}
+			if (command[bytes_read - 1] == '\n')
+			{
+				command[bytes_read - 1] = '\0';
+			}
+
+			if (command[0] == '#')
+			{
+				continue;
+			}
+
+			command = replace_variables(command);
+
+			token = strtok(command, " ");
+
+			while (token != NULL && arg_count < MAX_ARGS - 1)
+			{
+				args[arg_count++] = token;
+				token = strtok(NULL, " ");
+			}
+			args[arg_count] = NULL;
+
+			if (arg_count > 0 && strcmp(args[0], "exit") == 0)
+			{
+				if (arg_count > 1)
+				{
+					int exit_status = atoi(args[1]);
+					exit(exit_status);
+				}
+				else
+				{
+					exit(0);
+				}
+			}
+			else if (arg_count >= 3 && strcmp(args[0], "setenv") == 0)
+			{
+				if (set_env_variable(args[1], args[2]) == -1)
+				{
+					fprintf(stderr, "Failed to set environment variable\n");
+				}
+			}
+			else if (arg_count >= 2 && strcmp(args[0], "unsetenv") == 0)
+			{
+				if (unset_env_variable(args[1]) == -1)
+				{
+					fprintf(stderr, "Failed to unset environment variable\n");
+				}
+			}
+			else if (strcmp(args[0], "cd") == 0)
+			{
+				if (arg_count == 1 || (arg_count == 2 && strcmp(args[1], "-") == 0))
+				{
+					if (change_directory(getenv("HOME")) == -1)
+					{
+						fprintf(stderr, "Failed to change directory\n");
+					}
+				}
+				else if (arg_count == 2)
+				{
+					if (change_directory(args[1]) == -1)
+					{
+						fprintf(stderr, "Failed to change directory\n");
+					}
+				}
+				else
+				{
+					fprintf(stderr, "Usage: cd [DIRECTORY]\n");
+				}
+			}
+			else
+			{
+				child_pid = fork();
+
+				if (child_pid < 0)
+				{
+					perror("Fork error");
+				}
+				else if (child_pid == 0)
+				{
+					if (execvp(args[0], args) == -1)
+					{
+						perror("Command execution error");
+						exit(EXIT_FAILURE);
+					}
+				}
+				else
+				{
+					int child_status;
+					waitpid(child_pid, &child_status, 0);
+
+					if (WIFEXITED(child_status))
+					{
+						int exit_status = WEXITSTATUS(child_status);
+						(void)exit_status;
+					}
+					else if (WIFSIGNALED(child_status))
+					{
+						int terminating_signal = WTERMSIG(child_status);
+						(void)terminating_signal;
+					}
+				}
+			}
+		}
 	}
 
 	free(command);
 
-	return 0;
+	return (0);
 }
