@@ -1,7 +1,7 @@
 #include "shell.h"
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if input is from a terminal.
+ * displayPrompt - Displays the shell prompt "Shelly> " if input is terminal.
  * None
  * Return: None
  */
@@ -47,6 +47,7 @@ int parse_input(char *input, char **args)
 void handleBuiltInCommands(char **args)
 {
 	int exitStatus;
+
 	if (args[1] != NULL)
 	{
 		exitStatus = atoi(args[1]);

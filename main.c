@@ -1,5 +1,16 @@
 #include "shell.h"
 
+/**
+ * main - Entry point for the Simple Shell program.
+ *
+ * Description:
+ * This function serves as the entry point for the Simple Shell program. sets
+ * up the shell environment, reads and parses user commands, and executes them
+ * as appropriate. The main loop continuously prompts the user for input and
+ * processes the commands until the user exits the shell.
+ *
+ * Return: void
+ */
 int main(void)
 {
 	char *command = NULL;
