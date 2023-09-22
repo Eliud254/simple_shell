@@ -1,4 +1,10 @@
 #include "shell.h"
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_PATH_LEN 4096
 
 /**
  * displayPrompt - Displays the shell prompt "Shelly> " if input is from a terminal.
@@ -43,6 +49,7 @@ int main(void)
 {
 	char *command = NULL;
 	size_t commandSize = 0;
+	char cwd[MAX_PATH_LEN];
 
 	while (1)
 	{
@@ -113,44 +120,47 @@ int main(void)
 		}
 		else if (strcmp(args[0], "cd") == 0)
 		{
-			if (argCount < 2)
+			char *newDir = args[1];
+
+			if (argCount < 2 || strcmp(newDir, "~") == 0)
 			{
-				/* If no directory is provided, go to the home directory */
-				char *home = getenv("HOME");
-				if (home != NULL)
-				{
-					if (chdir(home) != 0)
-					{
-						perror("cd error");
-					}
-				}
-				else
-				{
-					fprintf(stderr, "cd: HOME not set\n");
-				}
+				/* If no directory is provided or "~" is used, go to the home directory */
+				newDir = getenv("HOME");
 			}
-			else if (strcmp(args[1], "-") == 0)
+			else if (strcmp(newDir, "-") == 0)
 			{
 				/* Handle "cd -" to go to the previous directory */
-				char *oldpwd = getenv("OLDPWD");
-				if (oldpwd != NULL)
+				newDir = getenv("OLDPWD");
+			}
+
+			if (newDir != NULL)
+			{
+				/* Get the current working directory */
+				if (getcwd(cwd, MAX_PATH_LEN) == NULL)
 				{
-					if (chdir(oldpwd) != 0)
-					{
-						perror("cd error");
-					}
+					perror("getcwd");
+					continue;
+				}
+
+				/* Change to the new directory */
+				if (chdir(newDir) != 0)
+				{
+					perror("cd error");
 				}
 				else
 				{
-					fprintf(stderr, "cd: OLDPWD not set\n");
+					/* Update the PWD and OLDPWD environment variables */
+					setenv("OLDPWD", cwd, 1);
+
+					if (getcwd(cwd, MAX_PATH_LEN) != NULL)
+					{
+						setenv("PWD", cwd, 1);
+					}
 				}
 			}
 			else
 			{
-				if (chdir(args[1]) != 0)
-				{
-					perror("cd error");
-				}
+				fprintf(stderr, "cd: HOME not set\n");
 			}
 			continue;
 		}
