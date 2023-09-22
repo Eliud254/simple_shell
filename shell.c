@@ -115,7 +115,35 @@ int main(void)
 		{
 			if (argCount < 2)
 			{
-				fprintf(stderr, "Usage: cd <directory>\n");
+				/* If no directory is provided, go to the home directory */
+				char *home = getenv("HOME");
+				if (home != NULL)
+				{
+					if (chdir(home) != 0)
+					{
+						perror("cd error");
+					}
+				}
+				else
+				{
+					fprintf(stderr, "cd: HOME not set\n");
+				}
+			}
+			else if (strcmp(args[1], "-") == 0)
+			{
+				/* Handle "cd -" to go to the previous directory */
+				char *oldpwd = getenv("OLDPWD");
+				if (oldpwd != NULL)
+				{
+					if (chdir(oldpwd) != 0)
+					{
+						perror("cd error");
+					}
+				}
+				else
+				{
+					fprintf(stderr, "cd: OLDPWD not set\n");
+				}
 			}
 			else
 			{
