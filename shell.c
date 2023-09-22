@@ -1,7 +1,8 @@
 #include "shell.h"
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if input is terminal.
+ * displayPrompt - Displays the shell prompt
+ * "Shelly> " if input is terminal.
  * None
  * Return: None
  */
@@ -34,7 +35,6 @@ int parse_input(char *input, char **args)
 		token = strtok(NULL, " ");
 	}
 	args[argCount] = NULL;
-
 	return (argCount);
 }
 
@@ -61,7 +61,8 @@ void handleBuiltInCommands(char **args)
 }
 
 /**
- * executeExternalCommand - Execute an external shell command.
+ * executeExternalCommand - Execute an
+ * external shell command.
  * @args: Array of command arguments.
  *
  * Return: None
