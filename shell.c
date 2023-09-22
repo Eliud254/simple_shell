@@ -1,7 +1,8 @@
 #include "shell.h"
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if input is from a terminal.
+ * displayPrompt - Displays the shell prompt "Shelly> "
+ * if input is from a terminal.
  * None
  * Return: None
  */
