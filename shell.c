@@ -78,3 +78,71 @@ void executeExternalCommand(char **args)
 		printError(args[0]);
 	}
 }
+
+
+
+/**
+ * main - Entry point for the shell program.
+ *
+ * Description: This function serves as
+ * the main entry point for the shell.
+ * It reads user input, parses commands, and executes them.
+ *
+ * Return: Always returns 0.
+ */
+int main(void)
+{
+    char *input = NULL;
+    size_t len = 0;
+    ssize_t read;
+    char *args[MAX_ARGS];
+    int argCount;
+
+    while (1)
+    {
+        displayPrompt();
+        read = getline(&input, &len, stdin);
+
+        if (read == -1)
+        {
+            perror("getline");
+            exit(EXIT_FAILURE);
+        }
+
+        if (input[read - 1] == '\n')
+            input[read - 1] = '\0';
+
+        argCount = parse_input(input, args);
+
+        if (argCount > 0)
+        {
+
+            if (strcmp(args[0], "exit") == 0)
+            {
+                if (argCount > 1)
+                {
+                 
+                    int exitStatus = atoi(args[1]);
+                    free(input);
+                    exit(exitStatus);
+                }
+                else
+                {
+                   
+                    free(input);
+                    exit(EXIT_SUCCESS);
+                }
+            }
+            else
+            {
+             
+                executeExternalCommand(args);
+            }
+        }
+    }
+
+  
+    free(input);
+    return 0;
+}
+
