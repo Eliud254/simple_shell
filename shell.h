@@ -11,6 +11,6 @@
 
 #define MAX_COMMAND_LENGTH 1024
 #define MAX_ARGS 128
-
+#define MAX_PATH_LEN 4096
 
 #endif
