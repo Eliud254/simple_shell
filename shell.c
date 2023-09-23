@@ -21,15 +21,35 @@ void displayPrompt(void)
 int parse_input(char *input, char **args)
 {
 	int argCount = 0;
-	char *token;
+	char *start = input;
+	char *end = input;
 
-	token = strtok(input, " ");
-
-	while (token != NULL && argCount < MAX_ARGS - 1)
+	while (*end != '\0')
 	{
-		args[argCount++] = token;
-		token = strtok(NULL, " ");
+		while (*start == ' ' || *start == '\t')
+		{
+			start++;
+		}
+
+		end = start;
+
+		while (*end != ' ' && *end != '\t' && *end != '\0')
+		{
+			end++;
+		}
+
+		if (start != end)
+		{
+			args[argCount++] = strndup(start, end - start);
+			if (argCount >= MAX_ARGS - 1)
+			{
+				break;
+			}
+		}
+
+		start = end + 1;
 	}
+
 	args[argCount] = NULL;
 
 	return (argCount);
