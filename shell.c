@@ -125,6 +125,29 @@ void add_alias(char *name, char *value)
 	}
 }
 
+/**
+ * expand_alias - Expand aliases in the command arguments.
+ * @args: Array of command arguments.
+ * Return: None
+ */
+void expand_alias(char **args)
+{
+	int i, j;
+
+	for (i = 0; args[i] != NULL; i++)
+	{
+		for (j = 0; j < aliasCount; j++)
+		{
+			if (strcmp(args[i], aliases[j].name) == 0)
+			{
+				/* Replace the alias with its value */
+				args[i] = strdup(aliases[j].value);
+				expand_alias(args); /* Recursively expand aliases */
+			}
+		}
+	}
+}
+
 int main(void)
 {
 	char *command = NULL;
@@ -182,6 +205,9 @@ int main(void)
 		{
 			continue;
 		}
+
+		/* Expand aliases in the command arguments */
+		expand_alias(args);
 
 		/* Handle built-in commands */
 		if (strcmp(args[0], "exit") == 0)
