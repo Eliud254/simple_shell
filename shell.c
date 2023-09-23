@@ -1,9 +1,90 @@
 #include "shell.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-/**
- * combinePaths - Combines the values of PATH and PATH1 environment variables.
- * Return: The combined path or NULL if neither PATH nor PATH1 is set.
- */
+int shouldExit = 0;
+
+void displayPrompt(void)
+{
+	if (isatty(STDIN_FILENO))
+	{
+		printf("Shelly> ");
+		fflush(stdout);
+	}
+}
+
+void processCommand(char *command)
+{
+	char *args[MAX_ARGS];
+	int argCount;
+
+	argCount = parse_input(command, args);
+
+	if (argCount == 0)
+		return;
+
+	if (strcmp(args[0], "exit") == 0)
+	{
+		handleInternalCommand(args);
+	}
+	else if (strcmp(args[0], "cd") == 0)
+	{
+		handleInternalCommand(args);
+	}
+	else
+	{
+		handleExternalCommand(args);
+	}
+}
+
+int parse_input(char *input, char **args)
+{
+	int argCount = 0;
+	char *token;
+
+	token = strtok(input, " ");
+
+	while (token != NULL && argCount < MAX_ARGS - 1)
+	{
+		args[argCount++] = token;
+		token = strtok(NULL, " ");
+	}
+	args[argCount] = NULL;
+
+	return (argCount);
+}
+
+void handleBuiltInCommands(char **args)
+{
+	int exitStatus;
+	if (args[1] != NULL)
+	{
+		exitStatus = atoi(args[1]);
+	}
+	else
+	{
+		exitStatus = EXIT_SUCCESS;
+	}
+	free(args);
+	exit((exitStatus));
+}
+
+void executeExternalCommand(char **args)
+{
+	if (access(args[0], X_OK) == 0)
+	{
+		execvp(args[0], args);
+	}
+	else
+	{
+		printError(args[0]);
+	}
+}
+
 char *combinePaths(void)
 {
 	char *path = getenv("PATH");
@@ -33,30 +114,25 @@ char *combinePaths(void)
 		}
 	}
 
-	return (combinedPath);
+	return ((combinedPath));
 }
 
-/**
- * printError - Prints an error message when an external command is not found.
- * @command: The name of the command that could not be found.
- */
 void printError(char *command)
 {
 	fprintf(stderr, "./hsh: 1: %s: not found\n", command);
 }
 
-/**
- * handleInternalCommand - ommands such as "exit" and "cd."
- * @args: An array of command arguments.
- */
 void handleInternalCommand(char **args)
 {
 	if (strcmp(args[0], "exit") == 0)
 	{
-		int exitStatus = (args[1] != NULL) ? (int)atoi(args[1]) : (int)EXIT_SUCCESS;
-
+		int exitStatus = EXIT_SUCCESS;
+		if (args[1] != NULL)
+		{
+			exitStatus = atoi(args[1]);
+		}
 		free(args);
-		exit((int)exitStatus);
+		exit((exitStatus));
 	}
 	else if (strcmp(args[0], "cd") == 0)
 	{
@@ -73,10 +149,6 @@ void handleInternalCommand(char **args)
 	}
 }
 
-/**
- * handleExternalCommand - Handles external shell commands.
- * @args: An array of command arguments.
- */
 void handleExternalCommand(char **args)
 {
 	char *combinedPath = combinePaths();
@@ -97,7 +169,6 @@ void handleExternalCommand(char **args)
 		else
 		{
 			int childStatus;
-
 			waitpid(childPid, &childStatus, 0);
 
 			if (WIFEXITED(childStatus))
@@ -115,6 +186,42 @@ void handleExternalCommand(char **args)
 	else
 	{
 		printError(args[0]);
-		exit(127);
+		exit((127));
 	}
+}
+
+int main(void)
+{
+	char *command = NULL;
+	size_t commandSize = 0;
+
+	while (!shouldExit)
+	{
+		ssize_t bytesRead;
+
+		displayPrompt();
+		bytesRead = getline(&command, &commandSize, stdin);
+
+		if (bytesRead == -1)
+		{
+			if (feof(stdin))
+				break;
+			else
+			{
+				perror("Input error");
+				clearerr(stdin);
+				free(command);
+				continue;
+			}
+		}
+
+		if (command[bytesRead - 1] == '\n')
+			command[bytesRead - 1] = '\0';
+
+		if (command[0] != '#')
+			processCommand(command);
+	}
+
+	free(command);
+	return (EXIT_SUCCESS);
 }
