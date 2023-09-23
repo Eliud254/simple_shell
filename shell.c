@@ -134,11 +134,10 @@ char *combinePaths(void)
 void printError(char *command)
 {
 	fprintf(stderr, "./hsh: 1: %s: not found\n", command);
-}
-/**
- * handleInternalCommand - Handles built-in shell commands.
- * @args: An array of command arguments.
- */
+} /**
+   * handleInternalCommand - Handles built-in shell commands.
+   * @args: An array of command arguments.
+   */
 void handleInternalCommand(char **args)
 {
 	if (strcmp(args[0], "exit") == 0)
@@ -157,6 +156,32 @@ void handleInternalCommand(char **args)
 		else
 		{
 			fprintf(stderr, "Usage: cd <directory>\n");
+		}
+		free(args);
+	}
+	else if (strcmp(args[0], "setenv") == 0)
+	{
+		if (args[1] != NULL && args[2] != NULL)
+		{
+			if (setenv(args[1], args[2], 1) != 0)
+				perror("setenv error");
+		}
+		else
+		{
+			fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+		}
+		free(args);
+	}
+	else if (strcmp(args[0], "unsetenv") == 0)
+	{
+		if (args[1] != NULL)
+		{
+			if (unsetenv(args[1]) != 0)
+				perror("unsetenv error");
+		}
+		else
+		{
+			fprintf(stderr, "Usage: unsetenv VARIABLE\n");
 		}
 		free(args);
 	}
