@@ -59,27 +59,6 @@ int parse_input(char *input, char **args)
 }
 
 /**
- * expand_alias - Expand aliases in the command arguments.
- * @args: Array of command arguments.
- */
-void expand_alias(char **args)
-{
-	int i, j;
-
-	for (i = 0; args[i] != NULL; i++)
-	{
-		for (j = 0; j < aliasCount; j++)
-		{
-			if (strcmp(args[i], aliases[j].name) == 0)
-			{
-				/* Replace the alias name with its value */
-				args[i] = strdup(aliases[j].value);
-			}
-		}
-	}
-}
-
-/**
  * print_aliases - Print all aliases or specific aliases.
  * @names: An array of alias names to print (NULL for all).
  */
@@ -203,9 +182,6 @@ int main(void)
 		{
 			continue;
 		}
-
-		/* Expand aliases in the command */
-		expand_alias(args);
 
 		/* Handle built-in commands */
 		if (strcmp(args[0], "exit") == 0)
