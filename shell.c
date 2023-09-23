@@ -135,19 +135,17 @@ void printError(char *command)
 {
 	fprintf(stderr, "./hsh: 1: %s: not found\n", command);
 }
-
 /**
- * handleInternalCommand - ommands such as "exit" and "cd."
+ * handleInternalCommand - Handles built-in shell commands.
  * @args: An array of command arguments.
  */
 void handleInternalCommand(char **args)
 {
 	if (strcmp(args[0], "exit") == 0)
 	{
-		int exitStatus = (args[1] != NULL) ? (int)atoi(args[1]) : (int)EXIT_SUCCESS;
-
+		int exitStatus = (args[1] != NULL) ? atoi(args[1]) : EXIT_SUCCESS;
 		free(args);
-		exit((int)exitStatus);
+		exit(exitStatus);
 	}
 	else if (strcmp(args[0], "cd") == 0)
 	{
@@ -163,6 +161,7 @@ void handleInternalCommand(char **args)
 		free(args);
 	}
 }
+
 /**
  * handleExternalCommand - Handles external shell commands.
  * @args: An array of command arguments.
