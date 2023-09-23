@@ -44,7 +44,6 @@ void printError(char *command)
 {
 	fprintf(stderr, "./hsh: %s: not found\n", command);
 }
-
 /**
  * handleInternalCommand - Handles internal shell commands.
  * @args: An array of command arguments.
@@ -83,7 +82,42 @@ void handleInternalCommand(char **args)
 		printEnvironment();
 		free(args);
 	}
+	else if (strcmp(args[0], "setenv") == 0)
+	{
+		if (args[1] != NULL && args[2] != NULL)
+		{
+			if (setenv(args[1], args[2], 1) != 0)
+			{
+				perror("setenv error");
+			}
+		}
+		else
+		{
+			fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+		}
+		free(args);
+	}
+	else if (strcmp(args[0], "unsetenv") == 0)
+	{
+		if (args[1] != NULL)
+		{
+			if (unsetenv(args[1]) != 0)
+			{
+				perror("unsetenv error");
+			}
+		}
+		else
+		{
+			fprintf(stderr, "Usage: unsetenv VARIABLE\n");
+		}
+		free(args);
+	}
+	else
+	{
+		handleExternalCommand(args);
+	}
 }
+
 /**
  * handleExternalCommand - Handles external shell commands.
  * @args: An array of command arguments.
