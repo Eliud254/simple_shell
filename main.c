@@ -1,9 +1,5 @@
 #include "shell.h"
 
-/**
- * main - The main function of the shell.
- * Return: Always returns 0.
- */
 int main(void)
 {
 	char *command = NULL;
