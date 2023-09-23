@@ -20,4 +20,13 @@ void executeExternalCommand(char **args);
 char *combinePaths(void);
 void printError(char *command);
 
+void executeCommand(char *commandPath, char **args);
+
+char *buildCommandPath(char *directory, char *command);
+
+char *findExecutablePath(char *command, char *path);
+
+char *combinePaths(void);
+
+void printError(char *command);
 #endif /* SHELL_H */
