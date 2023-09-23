@@ -1,4 +1,5 @@
 #include "shell.h"
+
 /**
  * processCommand - Processes a user-entered command with support for logical operators.
  * @command: The user-entered command.
@@ -52,12 +53,12 @@ int parse_input(char *input, char **args)
 	int argCount = 0;
 	char *token;
 
-	token = strtok(input, " ");
+	token = _strtok(input, " ");
 
 	while (token != NULL && argCount < MAX_ARGS - 1)
 	{
 		args[argCount++] = token;
-		token = strtok(NULL, " ");
+		token = _strtok(NULL, " ");
 	}
 	args[argCount] = NULL;
 
