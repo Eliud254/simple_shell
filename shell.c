@@ -92,52 +92,18 @@ void executeExternalCommand(char **args)
 }
 
 /**
- * combinePaths - Combines the values of PATH and PATH1 environment variables.
- * Return: The combined path or NULL if neither PATH nor PATH1 is set.
- */
-char *combinePaths(void)
-{
-	char *path = getenv("PATH");
-	char *path1 = getenv("PATH1");
-	char *combinedPath = NULL;
-
-	if (path != NULL || path1 != NULL)
-	{
-		size_t pathLen = (path != NULL) ? strlen(path) : 0;
-		size_t path1Len = (path1 != NULL) ? strlen(path1) : 0;
-
-		combinedPath = malloc(pathLen + path1Len + 2);
-		if (combinedPath != NULL)
-		{
-			if (path != NULL)
-			{
-				strcpy(combinedPath, path);
-				if (path1 != NULL)
-				{
-					strcat(combinedPath, ":");
-				}
-			}
-			if (path1 != NULL)
-			{
-				strcat(combinedPath, path1);
-			}
-		}
-	}
-
-	return (combinedPath);
-}
-
-/**
  * printError - Prints an error message when an external command is not found.
  * @command: The name of the command that could not be found.
  */
 void printError(char *command)
 {
 	fprintf(stderr, "./hsh: 1: %s: not found\n", command);
-} /**
-   * handleInternalCommand - Handles built-in shell commands.
-   * @args: An array of command arguments.
-   */
+}
+
+/**
+ * handleInternalCommand - Handles built-in shell commands.
+ * @args: An array of command arguments.
+ */
 void handleInternalCommand(char **args)
 {
 	if (strcmp(args[0], "exit") == 0)
@@ -159,32 +125,6 @@ void handleInternalCommand(char **args)
 		}
 		free(args);
 	}
-	else if (strcmp(args[0], "setenv") == 0)
-	{
-		if (args[1] != NULL && args[2] != NULL)
-		{
-			if (setenv(args[1], args[2], 1) != 0)
-				perror("setenv error");
-		}
-		else
-		{
-			fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
-		}
-		free(args);
-	}
-	else if (strcmp(args[0], "unsetenv") == 0)
-	{
-		if (args[1] != NULL)
-		{
-			if (unsetenv(args[1]) != 0)
-				perror("unsetenv error");
-		}
-		else
-		{
-			fprintf(stderr, "Usage: unsetenv VARIABLE\n");
-		}
-		free(args);
-	}
 }
 
 /**
@@ -193,63 +133,33 @@ void handleInternalCommand(char **args)
  */
 void handleExternalCommand(char **args)
 {
-	char *combinedPath = combinePaths();
-
-	if (combinedPath != NULL)
+	if (access(args[0], X_OK) == 0)
 	{
-
-		char commandPath[4096];
-
-		char *token = strtok(combinedPath, ":");
-		while (token != NULL)
+		pid_t childPid = fork();
+		if (childPid < 0)
 		{
-
-			snprintf(commandPath, sizeof(commandPath), "%s/%s", token, args[0]);
-
-			if (access(commandPath, X_OK) == 0)
-			{
-
-				pid_t childPid = fork();
-				if (childPid < 0)
-				{
-					perror("Fork error");
-				}
-				else if (childPid == 0)
-				{
-					args[0] = commandPath;
-					execvp(args[0], args);
-
-					printError(args[0]);
-					exit(1);
-				}
-				else
-				{
-					int childStatus;
-					waitpid(childPid, &childStatus, 0);
-					if (WIFEXITED(childStatus))
-					{
-						int exitStatus = WEXITSTATUS(childStatus);
-
-						(void)exitStatus;
-					}
-					else if (WIFSIGNALED(childStatus))
-					{
-						int terminatingSignal = WTERMSIG(childStatus);
-
-						(void)terminatingSignal;
-					}
-				}
-				break;
-			}
-
-			token = strtok(NULL, ":");
+			perror("Fork error");
 		}
-
-		free(combinedPath);
-
-		if (token == NULL)
+		else if (childPid == 0)
 		{
+			execvp(args[0], args);
 			printError(args[0]);
+			exit(1);
+		}
+		else
+		{
+			int childStatus;
+			waitpid(childPid, &childStatus, 0);
+			if (WIFEXITED(childStatus))
+			{
+				int exitStatus = WEXITSTATUS(childStatus);
+				(void)exitStatus;
+			}
+			else if (WIFSIGNALED(childStatus))
+			{
+				int terminatingSignal = WTERMSIG(childStatus);
+				(void)terminatingSignal;
+			}
 		}
 	}
 	else
