@@ -109,7 +109,7 @@ void handleExternalCommand(char **args)
 			if (execvp(args[0], args) == -1)
 			{
 				perror("Execution error");
-				exit(1);
+				exit(2);
 			}
 		}
 		else
