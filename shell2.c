@@ -1,18 +1,6 @@
 #include "shell.h"
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if stdin is a terminal.
- */
-void displayPrompt(void)
-{
-	if (isatty(STDIN_FILENO))
-	{
-		printf("Shelly> ");
-		fflush(stdout);
-	}
-}
-
-/**
  * processCommand - Processes a user-entered command.
  * @command: The user-entered command.
  */
@@ -26,7 +14,8 @@ void processCommand(char *command)
 	if (argCount == 0)
 		return;
 
-	if (strcmp(args[0], "exit") == 0 || strcmp(args[0], "cd") == 0)
+	if (strcmp(args[0], "exit") == 0 || strcmp(args[0], "cd") == 0 ||
+	    strcmp(args[0], "setenv") == 0 || strcmp(args[0], "unsetenv") == 0)
 	{
 		handleInternalCommand(args);
 	}
@@ -92,5 +81,19 @@ void executeExternalCommand(char **args)
 	else
 	{
 		printError(args[0]);
+	}
+}
+
+/**
+ * printEnvironment - Prints the current environment variables.
+ */
+void printEnvironment(void)
+{
+	extern char **environ;
+	int i = 0;
+	while (environ[i] != NULL)
+	{
+		printf("%s\n", environ[i]);
+		i++;
 	}
 }

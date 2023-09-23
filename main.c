@@ -34,17 +34,3 @@ int main(void)
 	free(command);
 	return (0);
 }
-
-/**
- * printEnvironment - Prints the current environment variables.
- */
-void printEnvironment(void)
-{
-	extern char **environ;
-	int i = 0;
-	while (environ[i] != NULL)
-	{
-		printf("%s\n", environ[i]);
-		i++;
-	}
-}

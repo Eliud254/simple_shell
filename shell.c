@@ -44,6 +44,7 @@ void printError(char *command)
 {
 	fprintf(stderr, "./hsh: %s: not found\n", command);
 }
+
 /**
  * handleInternalCommand - Handles internal shell commands.
  * @args: An array of command arguments.
@@ -172,5 +173,17 @@ void handleExternalCommand(char **args)
 	{
 		printError(args[0]);
 		exit(127);
+	}
+}
+
+/**
+ * displayPrompt - Displays the shell prompt "Shelly> " if stdin is a terminal.
+ */
+void displayPrompt(void)
+{
+	if (isatty(STDIN_FILENO))
+	{
+		printf("Shelly> ");
+		fflush(stdout);
 	}
 }
