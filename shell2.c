@@ -1,28 +1,44 @@
 #include "shell.h"
-
 /**
- * processCommand - Processes a user-entered command.
+ * processCommand - Processes a user-entered command with support for logical operators.
  * @command: The user-entered command.
  */
 void processCommand(char *command)
 {
 	char *args[MAX_ARGS];
 	int argCount;
+	int i = 0;
+	int result = 1; /* Initialize result to 1 (true) for the first command */
 
 	argCount = parse_input(command, args);
 
 	if (argCount == 0)
 		return;
 
-	if (strcmp(args[0], "exit") == 0 || strcmp(args[0], "cd") == 0 ||
-	    strcmp(args[0], "setenv") == 0 || strcmp(args[0], "unsetenv") == 0)
+	while (args[i] != NULL)
 	{
-		handleInternalCommand(args);
+		if (strcmp(args[i], "&&") == 0)
+		{
+			/* If '&&' is encountered, execute the next command only if the previous one succeeded */
+			if (result == 0)
+				break; /* Stop execution if the previous command failed */
+		}
+		else if (strcmp(args[i], "||") == 0)
+		{
+			/* If '||' is encountered, execute the next command only if the previous one failed */
+			if (result != 0)
+				break; /* Stop execution if the previous command succeeded */
+		}
+		else
+		{
+			/* Execute the command */
+			result = executeSingleCommand(args + i);
+		}
+		i++;
 	}
-	else
-	{
-		handleExternalCommand(args);
-	}
+
+	/* Free the memory allocated for args */
+	free(args[0]);
 }
 
 /**

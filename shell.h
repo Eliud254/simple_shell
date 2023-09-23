@@ -13,6 +13,7 @@
 
 extern char **environ;
 
+int executeSingleCommand(char **args);
 char *combinePaths(void);
 void printError(char *command);
 void handleInternalCommand(char **args);
