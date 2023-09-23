@@ -20,7 +20,7 @@ struct Alias aliases[MAX_ALIAS_COUNT];
 int aliasCount = 0;
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if input is from a terminal.
+ * displayPrompt - Displays the shell prompt "Shelly> " if input is from a from a terminal.
  * None
  * Return: None
  */
