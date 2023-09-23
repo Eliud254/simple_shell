@@ -7,19 +7,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
-#include <stdbool.h>
 
-#define MAX_COMMAND_LENGTH 1024
-#define MAX_ARGS 128
+#define MAX_ARGS 64
 
+void handleInternalCommand(char **args);
+void handleExternalCommand(char **args);
 void displayPrompt(void);
+void processCommand(char *command);
 int parse_input(char *input, char **args);
 void handleBuiltInCommands(char **args);
 void executeExternalCommand(char **args);
 char *combinePaths(void);
 void printError(char *command);
 
-int main(void);
-
-#endif
+#endif /* SHELL_H */
