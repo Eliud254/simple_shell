@@ -64,9 +64,14 @@ int parse_input(char *input, char **args)
  */
 void print_aliases(char **names)
 {
+<<<<<<< HEAD
 	int i;
 
 	if (names == NULL)
+=======
+	int exitStatus;
+	if (args[1] != NULL)
+>>>>>>> parent of 105a37d... sweet caroline
 	{
 		/* Print all aliases */
 		for (i = 0; i < aliasCount; i++)
