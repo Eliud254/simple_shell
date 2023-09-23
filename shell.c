@@ -4,40 +4,33 @@
  * combinePaths - Combines the values of PATH and PATH1 environment variables.
  * Return: The combined path or NULL if neither PATH nor PATH1 is set.
  */
-/**
- * combinePaths - Combines the values of PATH and PATH1 environment variables.
- * Return: The combined path or NULL if neither PATH nor PATH1 is set.
- */
 char *combinePaths(void)
 {
 	char *path = getenv("PATH");
+	char *path1 = getenv("PATH1");
 	char *combinedPath = NULL;
-	char *path1;
 
-	if (path == NULL)
+	if (path != NULL || path1 != NULL)
 	{
-		setenv("PATH", "/bin:/usr/bin", 1);
-		path = getenv("PATH");
-	}
-
-	path1 = getenv("PATH1");
-
-	if (path1 != NULL)
-	{
-		size_t pathLen = strlen(path);
-		size_t path1Len = strlen(path1);
+		size_t pathLen = (path != NULL) ? strlen(path) : 0;
+		size_t path1Len = (path1 != NULL) ? strlen(path1) : 0;
 
 		combinedPath = malloc(pathLen + path1Len + 2);
 		if (combinedPath != NULL)
 		{
-			strcpy(combinedPath, path);
-			strcat(combinedPath, ":");
-			strcat(combinedPath, path1);
+			if (path != NULL)
+			{
+				strcpy(combinedPath, path);
+				if (path1 != NULL)
+				{
+					strcat(combinedPath, ":");
+				}
+			}
+			if (path1 != NULL)
+			{
+				strcat(combinedPath, path1);
+			}
 		}
-	}
-	else
-	{
-		combinedPath = strdup(path);
 	}
 
 	return (combinedPath);
@@ -63,7 +56,6 @@ void handleInternalCommand(char **args)
 		if (args[1] != NULL)
 		{
 			int exitStatus = atoi(args[1]);
-
 			free(args);
 			exit(exitStatus);
 		}
@@ -113,7 +105,13 @@ void handleExternalCommand(char **args)
 		if (childPid < 0)
 			perror("Fork error");
 		else if (childPid == 0)
-			executeExternalCommand(args);
+		{
+			if (execvp(args[0], args) == -1)
+			{
+				perror("Execution error");
+				exit(1);
+			}
+		}
 		else
 		{
 			int childStatus;
