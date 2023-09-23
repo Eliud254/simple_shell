@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
-#define MAX_PATH_LEN 4096
 
 void displayPrompt(void)
 {
@@ -89,7 +89,6 @@ int main(void)
 
             if (argCount > 1)
             {
-              
                 fprintf(stderr, "Exit: %s\n", args[1]);
                 exit(EXIT_FAILURE);
             }

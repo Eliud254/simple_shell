@@ -10,7 +10,10 @@
 #include <sys/stat.h>
 
 #define MAX_COMMAND_LENGTH 1024
-#define MAX_ARGS 128
 #define MAX_PATH_LEN 4096
+#define MAX_ARGS 64
+
+void displayPrompt(void);
+int parse_input(char *input, char **args);
 
 #endif
