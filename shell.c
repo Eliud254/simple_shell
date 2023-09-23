@@ -46,7 +46,7 @@ void printError(char *command)
 }
 
 /**
- * handleInternalCommand - internal shell commands such as "exit" and "cd."
+ * handleInternalCommand - Handles internal shell commands.
  * @args: An array of command arguments.
  */
 void handleInternalCommand(char **args)
@@ -56,9 +56,7 @@ void handleInternalCommand(char **args)
 		if (args[1] != NULL)
 		{
 			int exitStatus = atoi(args[1]);
-
 			free(args);
-
 			exit(exitStatus);
 		}
 		else
@@ -80,16 +78,55 @@ void handleInternalCommand(char **args)
 		}
 		free(args);
 	}
+	else if (strcmp(args[0], "env") == 0)
+	{
+		printEnvironment();
+		free(args);
+	}
 }
 
 /**
- * displayPrompt - Displays the shell prompt "Shelly> " if stdin is a terminal.
+ * handleExternalCommand - Handles external shell commands.
+ * @args: An array of command arguments.
  */
-void displayPrompt(void)
+void handleExternalCommand(char **args)
 {
-	if (isatty(STDIN_FILENO))
+	char *combinedPath = combinePaths();
+
+	if (combinedPath != NULL)
 	{
-		printf("Shelly> ");
-		fflush(stdout);
+		pid_t childPid;
+
+		setenv("PATH", combinedPath, 1);
+		free(combinedPath);
+
+		childPid = fork();
+
+		if (childPid < 0)
+			perror("Fork error");
+		else if (childPid == 0)
+			executeExternalCommand(args);
+		else
+		{
+			int childStatus;
+
+			waitpid(childPid, &childStatus, 0);
+
+			if (WIFEXITED(childStatus))
+			{
+				int exitStatus = WEXITSTATUS(childStatus);
+				(void)exitStatus;
+			}
+			else if (WIFSIGNALED(childStatus))
+			{
+				int terminatingSignal = WTERMSIG(childStatus);
+				(void)terminatingSignal;
+			}
+		}
+	}
+	else
+	{
+		printError(args[0]);
+		exit(127);
 	}
 }
