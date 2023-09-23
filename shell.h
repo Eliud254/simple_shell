@@ -7,9 +7,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 
-#define MAX_ARGS 64
+#define MAX_ARGS 1024
 
+char *combinePaths(void);
+void printError(char *command);
 void handleInternalCommand(char **args);
 void handleExternalCommand(char **args);
 void displayPrompt(void);
@@ -17,7 +20,6 @@ void processCommand(char *command);
 int parse_input(char *input, char **args);
 void handleBuiltInCommands(char **args);
 void executeExternalCommand(char **args);
-char *combinePaths(void);
-void printError(char *command);
+void printEnvironment(void);
 
 #endif /* SHELL_H */
