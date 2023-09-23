@@ -38,16 +38,14 @@ int main(void)
     size_t commandSize = 0;
     char cwd[MAX_PATH_LEN];
 
-    char *path;
-    char *path1;
-    char *combinedPath = NULL;
-
     while (1)
     {
         ssize_t bytesRead;
         pid_t childPid;
         char *args[MAX_ARGS];
         int argCount;
+        char *path;
+        char *path1;
 
         displayPrompt();
 
@@ -88,10 +86,12 @@ int main(void)
         if (strcmp(args[0], "exit") == 0)
         {
             free(command);
+
             if (argCount > 1)
             {
-                int exitStatus = atoi(args[1]);
-                exit(exitStatus);
+              
+                fprintf(stderr, "Exit: %s\n", args[1]);
+                exit(EXIT_FAILURE);
             }
             else
             {
@@ -142,44 +142,9 @@ int main(void)
         path = getenv("PATH");
         path1 = getenv("PATH1");
 
-        combinedPath = NULL;
-
-        if (path != NULL && path1 != NULL)
+        if ((path == NULL || strlen(path) == 0) && (path1 == NULL || strlen(path1) == 0))
         {
-            combinedPath = malloc(strlen(path) + strlen(path1) + 2);
-            if (combinedPath != NULL)
-            {
-                strcpy(combinedPath, path);
-                strcat(combinedPath, ":");
-                strcat(combinedPath, path1);
-            }
-        }
-        else if (path != NULL)
-        {
-            combinedPath = strdup(path);
-        }
-        else if (path1 != NULL)
-        {
-            combinedPath = strdup(path1);
-        }
-        else
-        {
-            /* Set a default value when neither PATH nor PATH1 is set */
-            combinedPath = strdup("/bin:/usr/bin");
-        }
-
-        if (combinedPath != NULL)
-        {
-            setenv("PATH", combinedPath, 1);
-            free(combinedPath);
-
-            childPid = fork();
-
-            if (childPid < 0)
-            {
-                perror("Fork error");
-            }
-            else if (childPid == 0)
+            if (access(args[0], X_OK) == 0)
             {
                 execvp(args[0], args);
                 perror(args[0]);
@@ -187,24 +152,71 @@ int main(void)
             }
             else
             {
-                int childStatus;
-                waitpid(childPid, &childStatus, 0);
-                if (WIFEXITED(childStatus))
-                {
-                    int exitStatus = WEXITSTATUS(childStatus);
-                    (void)exitStatus;
-                }
-                else if (WIFSIGNALED(childStatus))
-                {
-                    int terminatingSignal = WTERMSIG(childStatus);
-                    (void)terminatingSignal;
-                }
+                fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
+                exit(127);
             }
         }
         else
         {
-            fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
-            exit(127);
+            char *combinedPath = NULL;
+
+            if (path != NULL && path1 != NULL)
+            {
+                combinedPath = malloc(strlen(path) + strlen(path1) + 2);
+                if (combinedPath != NULL)
+                {
+                    strcpy(combinedPath, path);
+                    strcat(combinedPath, ":");
+                    strcat(combinedPath, path1);
+                }
+            }
+            else if (path != NULL)
+            {
+                combinedPath = strdup(path);
+            }
+            else if (path1 != NULL)
+            {
+                combinedPath = strdup(path1);
+            }
+
+            if (combinedPath != NULL)
+            {
+                setenv("PATH", combinedPath, 1);
+                free(combinedPath);
+
+                childPid = fork();
+
+                if (childPid < 0)
+                {
+                    perror("Fork error");
+                }
+                else if (childPid == 0)
+                {
+                    execvp(args[0], args);
+                    perror(args[0]);
+                    exit(EXIT_FAILURE);
+                }
+                else
+                {
+                    int childStatus;
+                    waitpid(childPid, &childStatus, 0);
+                    if (WIFEXITED(childStatus))
+                    {
+                        int exitStatus = WEXITSTATUS(childStatus);
+                        (void)exitStatus;
+                    }
+                    else if (WIFSIGNALED(childStatus))
+                    {
+                        int terminatingSignal = WTERMSIG(childStatus);
+                        (void)terminatingSignal;
+                    }
+                }
+            }
+            else
+            {
+                fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
+                exit(127);
+            }
         }
     }
 
