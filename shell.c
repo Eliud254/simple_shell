@@ -57,6 +57,7 @@ void handleInternalCommand(char **args)
 		{
 			int exitStatus = atoi(args[1]);
 			free(args);
+
 			exit(exitStatus);
 		}
 		else

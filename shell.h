@@ -11,6 +11,8 @@
 
 #define MAX_ARGS 1024
 
+extern char **environ;
+
 char *combinePaths(void);
 void printError(char *command);
 void handleInternalCommand(char **args);
