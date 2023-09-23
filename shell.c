@@ -114,7 +114,13 @@ void handleExternalCommand(char **args)
 		if (childPid < 0)
 			perror("Fork error");
 		else if (childPid == 0)
-			executeExternalCommand(args);
+		{
+			if (execvp(args[0], args) == -1)
+			{
+				perror("Exec error");
+				exit(EXIT_FAILURE);
+			}
+		}
 		else
 		{
 			int childStatus;
