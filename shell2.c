@@ -106,11 +106,18 @@ void executeExternalCommand(char **args)
  */
 void printEnvironment(void)
 {
+	extern char **environ; /* Access to the global environment variable array */
 	int i = 0;
 
 	while (environ[i] != NULL)
 	{
 		printf("%s\n", environ[i]);
 		i++;
+	}
+
+	/* Handle the case when no environment variables are set */
+	if (i == 0)
+	{
+		printf("SHLVL=0\n"); /* Display a default environment variable */
 	}
 }
