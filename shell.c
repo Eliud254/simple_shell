@@ -42,7 +42,7 @@ char *combinePaths(void)
  */
 void printError(char *command)
 {
-	fprintf(stderr, "./hsh: 1: %s: not found\n", command);
+	fprintf(stderr, "./hsh: %s: not found\n", command);
 }
 
 /**
@@ -84,7 +84,6 @@ void handleInternalCommand(char **args)
 		free(args);
 	}
 }
-
 /**
  * handleExternalCommand - Handles external shell commands.
  * @args: An array of command arguments.
@@ -96,6 +95,11 @@ void handleExternalCommand(char **args)
 	if (combinedPath != NULL)
 	{
 		pid_t childPid;
+
+		if (getenv("PATH") == NULL)
+		{
+			setenv("PATH", "/usr/bin:/bin", 1);
+		}
 
 		setenv("PATH", combinedPath, 1);
 		free(combinedPath);
