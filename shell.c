@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #define MAX_PATH_LEN 4096
 #define MAX_ALIAS_LEN 256
@@ -130,6 +131,10 @@ int main(void)
 	char *command = NULL;
 	size_t commandSize = 0;
 	char cwd[MAX_PATH_LEN];
+
+	char *path;
+	char *path1;
+	char *combinedPath = NULL;
 
 	while (1)
 	{
@@ -312,41 +317,33 @@ int main(void)
 			{
 				combinedPath = strdup(path1);
 			}
+			else
+			{
+				/* Set a default value when neither PATH nor PATH1 is set */
+				combinedPath = strdup("/bin:/usr/bin");
+			}
 
 			if (combinedPath != NULL)
 			{
-				/* Set the combined path as the new PATH */
 				setenv("PATH", combinedPath, 1);
 				free(combinedPath);
 
-				/* Fork a child process using the updated PATH */
 				childPid = fork();
 
 				if (childPid < 0)
 				{
-					/* Error forking */
 					perror("Fork error");
 				}
 				else if (childPid == 0)
 				{
-					/* Child process */
-					/* Execute the command using execvp with full path */
-					char fullPath[MAX_PATH_LEN];
-					snprintf(fullPath, MAX_PATH_LEN, "%s/%s", combinedPath, args[0]);
-					execvp(fullPath, args);
-
-					/* If execvp returns, an error occurred */
-					fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
-					exit(127);
+					execvp(args[0], args);
+					perror(args[0]);
+					exit(EXIT_FAILURE);
 				}
 				else
 				{
-					/* Parent process */
-					/* Wait for the child process to complete */
 					int childStatus;
 					waitpid(childPid, &childStatus, 0);
-
-					/* Check if the child process exited normally or due to a signal */
 					if (WIFEXITED(childStatus))
 					{
 						int exitStatus = WEXITSTATUS(childStatus);
@@ -365,10 +362,9 @@ int main(void)
 				exit(127);
 			}
 		}
+
+		/* Free the allocated memory for the command */
+		free(command);
+
+		return (0);
 	}
-
-	/* Free the allocated memory for the command */
-	free(command);
-
-	return (0);
-}
